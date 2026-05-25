@@ -54,6 +54,37 @@
             background-color: #ccc;
             cursor: not-allowed;
         }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+        .action-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #snap-btn {
+            background-color: #d4af37; /* Gold accent */
+        }
+        #flip-btn {
+            background-color: #555;
+        }
         #status {
             margin-top: 15px;
             font-size: 16px;
@@ -76,7 +107,11 @@
     <!-- Hidden canvas to convert the video frame into an image -->
     <canvas id="photo-canvas"></canvas>
 
-    <button id="snap-btn">Take Photo & Save</button>
+    <div class="controls">
+        <button id="snap-btn" class="action-btn">Take Photo</button>
+        <button id="flip-btn" class="action-btn">🔄 Flip Camera</button>
+    </div>
+    
     <p id="status">Waiting for camera permission...</p>
 
     <script>
@@ -86,16 +121,24 @@
         const video = document.getElementById('camera-feed');
         const canvas = document.getElementById('photo-canvas');
         const snapBtn = document.getElementById('snap-btn');
+        const flipBtn = document.getElementById('flip-btn');
         const statusText = document.getElementById('status');
         const ctx = canvas.getContext('2d');
+
+        let currentFacingMode = "environment"; // Start with rear camera
 
         // 1. Request access to the user's camera
         async function initCamera() {
             try {
-                // Request the rear camera (environment) if available on phones in high resolution
+                // If a stream is already active, stop it before requesting a new one
+                if (video.srcObject) {
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                }
+
+                // Request the camera in high resolution
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { 
-                        facingMode: "environment",
+                        facingMode: currentFacingMode,
                         width: { ideal: 3840 },  /* Request 4K resolution ideally */
                         height: { ideal: 2160 } 
                     },
@@ -109,6 +152,12 @@
                 snapBtn.disabled = true;
             }
         }
+
+        // Toggle camera facing mode
+        flipBtn.addEventListener('click', () => {
+            currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
+            initCamera();
+        });
 
         // 2. Capture the photo when the button is clicked
         snapBtn.addEventListener('click', () => {
