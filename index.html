@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding Photo Capture</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            text-align: center;
+            background-color: #f9f7f1; /* Soft wedding-themed background */
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        #video-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: #000;
+        }
+        video {
+            width: 100%;
+            display: block;
+        }
+        #snap-btn {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background-color: #d4af37; /* Gold accent */
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        #snap-btn:active {
+            transform: scale(0.95);
+        }
+        #snap-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #555;
+        }
+        canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Capture the Moment! 📸</h1>
+    
+    <div id="video-container">
+        <!-- The video stream from the camera will show up here -->
+        <video id="camera-feed" autoplay playsinline></video>
+    </div>
+
+    <!-- Hidden canvas to convert the video frame into an image -->
+    <canvas id="photo-canvas"></canvas>
+
+    <button id="snap-btn">Take Photo & Save</button>
+    <p id="status">Waiting for camera permission...</p>
+
+    <script>
+        // --- IMPORTANT: Replace this URL with your Google Apps Script Web App URL ---
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzUMnC9YZrnLFHrVpwxExVmwQS0jOS4wkIbuQ9q4iQ54veqP3NLgHwjDHWGb3z-l3I/exec";
+
+        const video = document.getElementById('camera-feed');
+        const canvas = document.getElementById('photo-canvas');
+        const snapBtn = document.getElementById('snap-btn');
+        const statusText = document.getElementById('status');
+        const ctx = canvas.getContext('2d');
+
+        // 1. Request access to the user's camera
+        async function initCamera() {
+            try {
+                // Request the rear camera (environment) if available on phones
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment" },
+                    audio: false
+                });
+                video.srcObject = stream;
+                statusText.innerText = "Ready!";
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+                statusText.innerText = "Error: Could not access the camera. Make sure you granted permissions.";
+                snapBtn.disabled = true;
+            }
+        }
+
+        // 2. Capture the photo when the button is clicked
+        snapBtn.addEventListener('click', () => {
+            if (!video.srcObject) return;
+
+            statusText.innerText = "Capturing and saving...";
+            snapBtn.disabled = true;
+
+            // Set canvas size to match the video feed
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Draw the current video frame onto the canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert canvas to a Base64 encoded image (JPEG)
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+            // Send the image to Google Drive via Google Apps Script
+            uploadToGoogleDrive(imageData);
+        });
+
+        // 3. Send the image to the Google Apps Script
+        function uploadToGoogleDrive(base64Data) {
+            // Create a unique filename based on the current time
+            const filename = `wedding_photo_${new Date().getTime()}.jpg`;
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    filename: filename,
+                    mimeType: 'image/jpeg',
+                    base64: base64Data
+                })
+            })
+            // We use no-cors or ignore response because Google Apps script returns a redirect
+            .then(() => {
+                statusText.innerText = "Photo saved successfully! 💖";
+                snapBtn.disabled = false;
+                
+                // Reset the status text after 3 seconds
+                setTimeout(() => {
+                    statusText.innerText = "Ready for another!";
+                }, 3000);
+            })
+            .catch(error => {
+                console.error("Error uploading:", error);
+                statusText.innerText = "Failed to upload photo. Please try again.";
+                snapBtn.disabled = false;
+            });
+        }
+
+        // Start the camera when the page loads
+        window.addEventListener('load', initCamera);
+    </script>
+</body>
+</html>
