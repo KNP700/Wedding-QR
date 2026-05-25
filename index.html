@@ -36,7 +36,7 @@
         }
         .floating-flip-btn {
             position: absolute;
-            bottom: 15px;
+            top: 15px;
             right: 15px;
             background: rgba(0, 0, 0, 0.6);
             color: white;
@@ -126,7 +126,13 @@
         <!-- The video stream from the camera will show up here -->
         <video id="camera-feed" autoplay playsinline></video>
         <!-- Floating Swap Camera Button -->
-        <button id="flip-btn" class="floating-flip-btn">🔄</button>
+        <button id="flip-btn" class="floating-flip-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+        </button>
     </div>
 
     <!-- Hidden canvas to convert the video frame into an image -->
