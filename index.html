@@ -92,9 +92,13 @@
         // 1. Request access to the user's camera
         async function initCamera() {
             try {
-                // Request the rear camera (environment) if available on phones
+                // Request the rear camera (environment) if available on phones in high resolution
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "environment" },
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 3840 },  /* Request 4K resolution ideally */
+                        height: { ideal: 2160 } 
+                    },
                     audio: false
                 });
                 video.srcObject = stream;
@@ -120,8 +124,8 @@
             // Draw the current video frame onto the canvas
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Convert canvas to a Base64 encoded image (JPEG)
-            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+            // Convert canvas to a Base64 encoded image (JPEG) at maximum quality (1.0)
+            const imageData = canvas.toDataURL('image/jpeg', 1.0);
 
             // Send the image to Google Drive via Google Apps Script
             uploadToGoogleDrive(imageData);
