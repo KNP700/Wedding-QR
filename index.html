@@ -38,6 +38,9 @@
             width: 100%;
             display: block;
         }
+        .mirrored {
+            transform: scaleX(-1);
+        }
         .floating-flip-btn {
             position: absolute;
             top: 15px;
@@ -178,6 +181,14 @@
                     },
                     audio: false
                 });
+                
+                // Flip the video preview horizontally for the front camera (mirror effect)
+                if (currentFacingMode === "user") {
+                    video.classList.add("mirrored");
+                } else {
+                    video.classList.remove("mirrored");
+                }
+
                 video.srcObject = stream;
                 statusText.innerText = "Ready!";
             } catch (err) {
